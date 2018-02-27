@@ -6,8 +6,7 @@
  *
  */
 
-#define _ESP32_
-#ifdef _ESP32_
+#ifdef ARDUINO_ESP32_DEV
 #include <WiFi.h>
 #else
 #include <ESP8266WiFi.h>
@@ -15,13 +14,24 @@
 #include <aJSON.h>
 
 #define THETA_V
+//#define THETA_S
+//#define THETA_SC
+//#define THETA_SC_HATSUNE_MIKU
 #ifdef THETA_V
 #define AP_PASSWORD "00101594"
 #define AP_SSID "THETAYL" AP_PASSWORD ".OSC"
-#else
+#elif defined THETA_S
 #define AP_PASSWORD "00111871"
 #define AP_SSID "THETAXS" AP_PASSWORD ".OSC"
+#elif defined THETA_SC
+#define AP_PASSWORD "30101357"
+#define AP_SSID "THETAYJ" AP_PASSWORD ".OSC"
+#elif defined THETA_SC_HATSUNE_MIKU
+#define AP_PASSWORD "39391285"
+#define AP_SSID "THETAHM" AP_PASSWORD ".OSC"
 #endif
+#define CL_SSID "cl_ssid"
+#define CL_PASSWORD "cl_password"
 #define WEB_SERVER "192.168.1.1"
 #define WEB_PORT "80"
 #include "thetav2_1.h"
@@ -42,6 +52,9 @@ void GettingStarted(WiFiClient& client)
   char buff[1024] = {'\0'};
   const char *requests[] = {
     POST_REQUEST_BODY_takePicture,
+#ifdef THETA_V
+    POST_REQUEST_BODY_setAccessPoint,
+#endif
     NULL
   };
 
@@ -293,6 +306,7 @@ void GettingStarted(WiFiClient& client)
       count++;
       Serial.printf("%02x",ch);
     }
+    Serial.println("");
     Serial.printf("count = %ld\r\n",count);
   }
   return;

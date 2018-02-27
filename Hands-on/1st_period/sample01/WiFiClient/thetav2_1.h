@@ -10,6 +10,12 @@
 #ifndef AP_PASSWORD
 #define AP_PASSWORD "ap_password"
 #endif
+#ifndef CL_SSID
+#define CL_SSID "cl_ssid"
+#endif
+#ifndef CL_PASSWORD
+#define CL_PASSWORD "cl_password"
+#endif
 #ifndef DIGEST_USER
 #define DIGEST_USER AP_SSID
 #endif
@@ -72,6 +78,16 @@ static const char *POST_REQUEST_BODY_setOptions__bluetoothPower = "{\r\n"
 static const char *POST_REQUEST_BODY_setBluetoothDevice = "{\r\n"
 "	\"name\":\"camera._setBluetoothDevice\",\r\n"
 "	\"parameters\":{\"uuid\":\""AUTH_UUID"\"}\r\n"
+"}\r\n";
+
+// POST http://192.168.1.1/osc/commands/execute
+static const char *POST_REQUEST_BODY_setAccessPoint = "{\r\n"
+"	\"name\":\"camera._setAccessPoint\",\r\n"
+"	\"parameters\":{\r\n"
+"		\"ssid\":\"" CL_SSID "\",\r\n"
+"		\"security\":\"WPA/WPA2 PSK\",\r\n"
+"		\"password\":\"" CL_PASSWORD "\"\r\n"
+"	}\r\n"
 "}\r\n";
 
 // dststr 合成後の文字列
