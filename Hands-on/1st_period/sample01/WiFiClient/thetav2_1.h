@@ -66,13 +66,31 @@ static const char *POST_REQUEST_BODY_getOptions__bluetoothPower = "{\r\n"
 "	}\r\n"
 "}\r\n";
 
-static const char *POST_REQUEST_BODY_setOptions__bluetoothPower = "{\r\n"
+static const char *POST_REQUEST_BODY_setOptions__bluetoothPower_ON = "{\r\n"
 "	\"name\":\"camera.setOptions\",\r\n"
 "	\"parameters\":{\r\n"
 "		\"options\":{\r\n"
 "			\"_bluetoothPower\":\"ON\"\r\n"
 "		}\r\n"
 "	}\r\n"
+"}\r\n";
+
+static const char *POST_REQUEST_BODY_setOptions__shutterVolume_0 = "{\r\n"
+"  \"name\":\"camera.setOptions\",\r\n"
+" \"parameters\":{\r\n"
+"   \"options\":{\r\n"
+"     \"_shutterVolume\":0\r\n"
+"   }\r\n"
+" }\r\n"
+"}\r\n";
+
+static const char *POST_REQUEST_BODY_setOptions_sleepDelay_OFF = "{\r\n"
+"  \"name\":\"camera.setOptions\",\r\n"
+" \"parameters\":{\r\n"
+"   \"options\":{\r\n"
+"     \"sleepDelay\":65535\r\n"
+"   }\r\n"
+" }\r\n"
 "}\r\n";
 
 static const char *POST_REQUEST_BODY_setBluetoothDevice = "{\r\n"
@@ -83,11 +101,21 @@ static const char *POST_REQUEST_BODY_setBluetoothDevice = "{\r\n"
 // POST http://192.168.1.1/osc/commands/execute
 static const char *POST_REQUEST_BODY_setAccessPoint = "{\r\n"
 "	\"name\":\"camera._setAccessPoint\",\r\n"
-"	\"parameters\":{\r\n"
-"		\"ssid\":\"" CL_SSID "\",\r\n"
+"  \"parameters\":{\r\n"
+"   \"ssid\":\"" CL_SSID "\",\r\n"
 "		\"security\":\"WPA/WPA2 PSK\",\r\n"
 "		\"password\":\"" CL_PASSWORD "\"\r\n"
 "	}\r\n"
+"}\r\n";
+
+static const char *POST_REQUEST_BODY__listAccessPoints = "{\r\n"
+"  \"name\":\"camera._listAccessPoints\"\r\n"
+"}\r\n";
+
+static const char *POST_REQUEST_BODY__deleteAccessPoint = "{\r\n"
+"  \"name\":\"camera._deleteAccessPoint\"\r\n"
+"  \"parameters\":{\r\n"
+"   \"ssid\":\"" CL_SSID "\",\r\n"
 "}\r\n";
 
 // dststr 合成後の文字列
