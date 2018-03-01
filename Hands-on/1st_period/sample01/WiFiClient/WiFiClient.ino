@@ -16,18 +16,16 @@
 #define THETA_V
 //#define THETA_S
 //#define THETA_SC
-//#define THETA_SC_HATSUNE_MIKU
-#ifdef THETA_V
+//#define THETA_SC_TYPE_HATSUNE_MIKU
 #define AP_PASSWORD "00101594"
+
+#ifdef THETA_V
 #define AP_SSID "THETAYL" AP_PASSWORD ".OSC"
 #elif defined THETA_S
-#define AP_PASSWORD "00111871"
 #define AP_SSID "THETAXS" AP_PASSWORD ".OSC"
 #elif defined THETA_SC
-#define AP_PASSWORD "30101357"
 #define AP_SSID "THETAYJ" AP_PASSWORD ".OSC"
-#elif defined THETA_SC_HATSUNE_MIKU
-#define AP_PASSWORD "39391285"
+#elif defined THETA_SC_TYPE_HATSUNE_MIKU
 #define AP_SSID "THETAHM" AP_PASSWORD ".OSC"
 #endif
 #define CL_SSID "cl_ssid"
