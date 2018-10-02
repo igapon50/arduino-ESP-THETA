@@ -56,10 +56,10 @@ void loop() {
     if((L_X == 0 && L_Y == 0) || (R_X == 0 && R_Y == 0)){ // あり得ない値が来たら無視する
       return;
     }
-    char newer_L_X = 'A' + map(L_X,0,255,0,14);
-    char newer_L_Y = 'A' + map(L_Y,0,255,0,14);
-    char newer_R_X = 'A' + map(R_X,0,255,0,14);
-    char newer_R_Y = 'A' + map(R_Y,0,255,0,14);
+    char newer_L_X = 'A' + map(128 < L_X ? --L_X : L_X,0,255,0,15);
+    char newer_L_Y = 'A' + map(128 < L_Y ? --L_Y : L_Y,0,255,0,15);
+    char newer_R_X = 'A' + map(128 < R_X ? --R_X : R_X,0,255,0,15);
+    char newer_R_Y = 'A' + map(128 < R_Y ? --R_Y : R_Y,0,255,0,15);
     if(older_L_X != newer_L_X || older_L_Y != newer_L_Y || older_R_X != newer_R_X || older_R_Y != newer_R_Y){
       older_L_X = newer_L_X;
       older_L_Y = newer_L_Y;
