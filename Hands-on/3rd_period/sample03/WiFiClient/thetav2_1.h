@@ -30,18 +30,18 @@
 #endif
 #define SETTION_ID "SID_0001"
 
-static const char *POST_REQUEST_BODY_takePicture = "{\r\n"
+static const char* const POST_REQUEST_BODY_takePicture = "{\r\n"
 "	\"name\":\"camera.takePicture\"\r\n"
 "}\r\n";
 
-static const char *POST_REQUEST_BODY_closeSession = "{\r\n"
+static const char* const POST_REQUEST_BODY_closeSession = "{\r\n"
 "	\"name\":\"camera.closeSession\",\r\n"
 "	\"parameters\":{\r\n"
 "		\"sessionId\": \"" SETTION_ID "\"\r\n"
 "	}\r\n"
 "}\r\n";
 
-static const char *POST_REQUEST_BODY_clientVersion = "{\r\n"
+static const char* const POST_REQUEST_BODY_clientVersion = "{\r\n"
 "	\"name\":\"camera.setOptions\",\r\n"
 "	\"parameters\":{\r\n"
 "		\"sessionId\": \"" SETTION_ID "\",\r\n"
@@ -51,12 +51,12 @@ static const char *POST_REQUEST_BODY_clientVersion = "{\r\n"
 "	}\r\n"
 "}\r\n";
 
-static const char *POST_REQUEST_BODY_startSession = "{\r\n"
+static const char* const POST_REQUEST_BODY_startSession = "{\r\n"
 "	\"name\":\"camera.startSession\",\r\n"
 "	\"parameters\":{}\r\n"
 "}\r\n";
 
-static const char *POST_REQUEST_BODY_getOptions__bluetoothPower = "{\r\n"
+static const char* const POST_REQUEST_BODY_getOptions__bluetoothPower = "{\r\n"
 "	\"name\":\"camera.getOptions\",\r\n"
 "	\"parameters\":{\r\n"
 "		\"optionNames\":[\r\n"
@@ -66,7 +66,7 @@ static const char *POST_REQUEST_BODY_getOptions__bluetoothPower = "{\r\n"
 "	}\r\n"
 "}\r\n";
 
-static const char *POST_REQUEST_BODY_setOptions__bluetoothPower_ON = "{\r\n"
+static const char* const POST_REQUEST_BODY_setOptions__bluetoothPower_ON = "{\r\n"
 "	\"name\":\"camera.setOptions\",\r\n"
 "	\"parameters\":{\r\n"
 "		\"options\":{\r\n"
@@ -75,7 +75,7 @@ static const char *POST_REQUEST_BODY_setOptions__bluetoothPower_ON = "{\r\n"
 "	}\r\n"
 "}\r\n";
 
-static const char *POST_REQUEST_BODY_setOptions__shutterVolume_0 = "{\r\n"
+static const char* const POST_REQUEST_BODY_setOptions__shutterVolume_0 = "{\r\n"
 "  \"name\":\"camera.setOptions\",\r\n"
 " \"parameters\":{\r\n"
 "   \"options\":{\r\n"
@@ -84,7 +84,7 @@ static const char *POST_REQUEST_BODY_setOptions__shutterVolume_0 = "{\r\n"
 " }\r\n"
 "}\r\n";
 
-static const char *POST_REQUEST_BODY_setOptions_sleepDelay_OFF = "{\r\n"
+static const char* const POST_REQUEST_BODY_setOptions_sleepDelay_OFF = "{\r\n"
 "  \"name\":\"camera.setOptions\",\r\n"
 " \"parameters\":{\r\n"
 "   \"options\":{\r\n"
@@ -93,13 +93,13 @@ static const char *POST_REQUEST_BODY_setOptions_sleepDelay_OFF = "{\r\n"
 " }\r\n"
 "}\r\n";
 
-static const char *POST_REQUEST_BODY_setBluetoothDevice = "{\r\n"
+static const char* const POST_REQUEST_BODY_setBluetoothDevice = "{\r\n"
 "	\"name\":\"camera._setBluetoothDevice\",\r\n"
 "	\"parameters\":{\"uuid\":\""AUTH_UUID"\"}\r\n"
 "}\r\n";
 
 // POST http://192.168.1.1/osc/commands/execute
-static const char *POST_REQUEST_BODY_setAccessPoint = "{\r\n"
+static const char* const POST_REQUEST_BODY_setAccessPoint = "{\r\n"
 "	\"name\":\"camera._setAccessPoint\",\r\n"
 "  \"parameters\":{\r\n"
 "   \"ssid\":\"" CL_SSID "\",\r\n"
@@ -108,14 +108,24 @@ static const char *POST_REQUEST_BODY_setAccessPoint = "{\r\n"
 "	}\r\n"
 "}\r\n";
 
-static const char *POST_REQUEST_BODY__listAccessPoints = "{\r\n"
+static const char* const POST_REQUEST_BODY__listAccessPoints = "{\r\n"
 "  \"name\":\"camera._listAccessPoints\"\r\n"
 "}\r\n";
 
-static const char *POST_REQUEST_BODY__deleteAccessPoint = "{\r\n"
+static const char* const POST_REQUEST_BODY__deleteAccessPoint = "{\r\n"
 "  \"name\":\"camera._deleteAccessPoint\"\r\n"
 "  \"parameters\":{\r\n"
 "   \"ssid\":\"" CL_SSID "\",\r\n"
+"}\r\n";
+
+static const char* const exposureCompensation[] = {"-2.0", "-1.7", "-1.3", "-1.0", "-0.7", "-0.3", "0.0", "0.3", "0.7", "1.0", "1.3", "1.7", "2.0"};
+static const char* const POST_REQUEST_BODY_setOptions_exposureCompensation = "{\r\n"
+"  \"name\":\"camera.setOptions\",\r\n"
+" \"parameters\":{\r\n"
+"   \"options\":{\r\n"
+"     \"exposureCompensation\":%s\r\n"
+"   }\r\n"
+" }\r\n"
 "}\r\n";
 
 // dststr 合成後の文字列
@@ -124,13 +134,13 @@ static const char *POST_REQUEST_BODY__deleteAccessPoint = "{\r\n"
 // ip 192.168.1.1(固定)
 // port 80(無指定)
 // method GET,POST(固定)
-void margeString_GET_Request(char *dststr, size_t dstlen, const char *path){
-	static const char *REQUEST_HEADER_1 = " HTTP/1.1\r\n"
+void margeString_GET_Request(char *dststr, size_t dstlen, const char* const path){
+	static const char* const REQUEST_HEADER_1 = " HTTP/1.1\r\n"
 	"Connection: keep-alive\r\n"
 	"Content-Type: application/json\r\n"
 	"Accept: application/json\r\n"
 	"Content-Length: ";
-	static const char *REQUEST_HEADER_2 = "\r\nHost: "WEB_SERVER"\r\n"
+	static const char* const REQUEST_HEADER_2 = "\r\nHost: "WEB_SERVER"\r\n"
 	"User-Agent: Apache-HttpClient/4.5.3 (Java/1.8.0_144)\r\n"
 	"Authorization: Basic cmVjZXB0b3I6cmVjZXB0b3I=\r\n"
 	"\r\n";
@@ -147,13 +157,13 @@ void margeString_GET_Request(char *dststr, size_t dstlen, const char *path){
 // ip 192.168.1.1(固定)
 // port 80(無指定)
 // method GET,POST(固定)
-void margeString_POST_Request(char *dststr, size_t dstlen, const char *body, const char *path = "/osc/commands/execute"){
-	static const char *REQUEST_HEADER_1 = " HTTP/1.1\r\n"
+void margeString_POST_Request(char *dststr, size_t dstlen, const char* const body, const char* const path = "/osc/commands/execute"){
+	static const char* const REQUEST_HEADER_1 = " HTTP/1.1\r\n"
 	"Connection: keep-alive\r\n"
 	"Content-Type: application/json\r\n"
 	"Accept: application/json\r\n"
 	"Content-Length: ";
-	static const char *REQUEST_HEADER_2 = "\r\nHost: "WEB_SERVER"\r\n"
+	static const char* const REQUEST_HEADER_2 = "\r\nHost: "WEB_SERVER"\r\n"
 	"User-Agent: Apache-HttpClient/4.5.3 (Java/1.8.0_144)\r\n"
 	"Authorization: Basic cmVjZXB0b3I6cmVjZXB0b3I=\r\n"
 	"\r\n";
@@ -173,7 +183,7 @@ bool initialize_requests(int s){
 	int r;
 	char recv_buf[64];
 	char buffer[1024] = {'\0'};
-	const char *requests[] = {
+	const char* const requests[] = {
 		POST_REQUEST_BODY_setBluetoothDevice,
 		POST_REQUEST_BODY_setOptions__bluetoothPower,
 		POST_REQUEST_BODY_getOptions__bluetoothPower,

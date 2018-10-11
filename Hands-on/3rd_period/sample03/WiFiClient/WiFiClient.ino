@@ -5,6 +5,7 @@
     below. Or just customize this script to talk to other HTTP servers.
 
 */
+#include <Wire.h>
 
 #ifdef ARDUINO_ESP32_DEV
 #include <WiFi.h>
@@ -40,22 +41,14 @@ String host = WEB_SERVER;
 String port = WEB_PORT;
 String g_fileName;
 int result_timeout = 10000; //10秒
+WiFiClient client;
 
-void GettingStarted(WiFiClient& client)
+void initialized(WiFiClient& client)
 {
   String jsonString = "";
-  String fileUrl = "";
   String privious_fileUrl = "";
   char buffer[1024] = {'\0'};
   char buff[1024] = {'\0'};
-  const char *requests[] = {
-    POST_REQUEST_BODY_takePicture,
-#ifdef THETA_V
-    POST_REQUEST_BODY_setAccessPoint,
-    POST_REQUEST_BODY__listAccessPoints,
-#endif
-    NULL
-  };
 
   {
     Serial.println("----------state----------");
@@ -196,123 +189,48 @@ void GettingStarted(WiFiClient& client)
       Serial.println(privious_fileUrl);
     }
   }
+  return;
+}
 
-  for (int no = 0 ; requests[no] != NULL ; no++) {
-    Serial.println("----------command_list----------");
-    margeString_POST_Request(buffer, 1024, requests[no]);
-    Serial.println(buffer);
-    // This will send the request to the server
-    client.println(String(buffer));
-    unsigned long timeout = millis();
-    while (client.available() == 0) {
-      if (millis() - timeout > result_timeout) {
-        Serial.println(">>> Client Timeout !");
-        client.stop();
-        return;
-      }
-    }
-    // Read all the lines of the reply from server and print them to Serial
-    while (client.available()) {
-      String line = client.readStringUntil('\r');
-      line.trim();
-      Serial.println(line);
-    }
-    {
-      Serial.println("----------再接続----------");
+void CommandRequest(WiFiClient& client, const char* const request)
+{
+  char buffer[1024] = {'\0'};
+
+  Serial.println("----------command----------");
+  margeString_POST_Request(buffer, sizeof(buffer), request);
+  Serial.println(buffer);
+  // This will send the request to the server
+  client.println(String(buffer));
+  unsigned long timeout = millis();
+  while (client.available() == 0) {
+    if (millis() - timeout > result_timeout) {
+      Serial.println(">>> Client Timeout !");
       client.stop();
-      // delay(1000);
-      if (!client.connect(host.c_str(), port.toInt())) {
-        Serial.println("connection failed");
-        return;
-      }
+      return;
     }
-    delay(8000);
   }
-  do {
-    Serial.println("----------state----------");
-    margeString_POST_Request(buffer, 1024, "", "/osc/state");
-    Serial.println(buffer);
-    // This will send the request to the server
-    client.print(String(buffer));
-    unsigned long timeout = millis();
-    while (client.available() == 0) {
-      if (millis() - timeout > result_timeout) {
-        Serial.println(">>> Client Timeout !");
-        client.stop();
-        return;
-      }
-    }
-    // Read all the lines of the reply from server and print them to Serial
-    jsonString = "";
-    while (client.available()) {
-      String line = client.readStringUntil('\r');
-      line.trim();
-      jsonString += line;
-      Serial.println(line);
-    }
-    int index = jsonString.indexOf("{");
-    jsonString = jsonString.substring(index);
-    jsonString += "}";
-    // aJson.parseの引数がchar*なので、jsonString.c_str()が使えない
-    int len = jsonString.length();
-    memset(buff, '\0', 1024);
-    jsonString.toCharArray(buff, len);
-    Serial.println(buff);
-    aJsonObject* root = aJson.parse(buff);
-    //    aJsonObject* root = aJson.parse(jsonString.c_str());
-    if (NULL == root) {
-      Serial.println("aJson.parse() failed. root");
-      return;
-    }
-    aJsonObject* state = aJson.getObjectItem(root, "state");
-    if (NULL == state) {
-      Serial.println("aJson.parse() failed. state");
-      return;
-    }
-    aJsonObject* _latestFileUrl = aJson.getObjectItem(state, "_latestFileUrl");
-    if (NULL == _latestFileUrl) {
-      Serial.println("aJson.parse() failed. _latestFileUrl");
-      return;
-    }
-    const char* latestfileUrl = _latestFileUrl->valuestring;
-    fileUrl = latestfileUrl;
-    Serial.print("fileUrl : ");
-    Serial.println(fileUrl);
-  } while (fileUrl.equals(privious_fileUrl));
-
-  delay(5000);
+  // Read all the lines of the reply from server and print them to Serial
+  while (client.available()) {
+    String line = client.readStringUntil('\r');
+    line.trim();
+    Serial.println(line);
+  }
   {
-    Serial.println("----------GET,url----------");
-    String url = "http://";
-    String Thumbneil = "?type=thumb";
-    url += host;
-    fileUrl.replace(url.c_str(), "");
-    margeString_GET_Request(buffer, 1024, (fileUrl + Thumbneil).c_str());
-    Serial.println(buffer);
-    // This will send the request to the server
-    client.print(String(buffer));
-    unsigned long timeout = millis();
-    while (client.available() == 0) {
-      if (millis() - timeout > result_timeout) {
-        Serial.println(">>> Client Timeout !");
-        client.stop();
-        return;
-      }
+    Serial.println("----------再接続----------");
+    client.stop();
+    // delay(1000);
+    if (!client.connect(host.c_str(), port.toInt())) {
+      Serial.println("connection failed");
+      return;
     }
-    long count = 0;
-    while (client.available()) {
-      char ch = client.read();
-      count++;
-      Serial.printf("%02x", ch);
-    }
-    Serial.println("");
-    Serial.printf("count = %ld\r\n", count);
   }
   return;
 }
 
 void setup()
 {
+  Wire.begin(8);                // join i2c bus with address #8
+//  Wire.onReceive(receiveEvent); // register event
   Serial.begin(115200);
   delay(10);
 
@@ -335,28 +253,75 @@ void setup()
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
   g_fileName = "";
+  Serial.print("connecting to ");
+  Serial.println(host);
+
+  delay(5000);
+  Serial.print("connecting to ");
+  Serial.println(host);
+  // Use WiFiClient class to create TCP connections
+  if (!client.connect(host.c_str(), port.toInt())) {
+    Serial.println("connection failed");
+    return;
+  }
+  initialized(client);
 }
 
 int value = 0;
 
 void loop()
 {
-  delay(5000);
+  byte buff[6]={};
+  static char older_L_X = 'A';
   ++value;
+  delay(1000);
 
-  Serial.print("connecting to ");
-  Serial.println(host);
-
-  // Use WiFiClient class to create TCP connections
-  WiFiClient client;
-  if (!client.connect(host.c_str(), port.toInt())) {
-    Serial.println("connection failed");
-    return;
+  if(1 < readdata(8, buff, sizeof(buff))){
+    char buffer[1024] = {'\0'};
+    char newer_L_X = buff[0];
+    if(older_L_X != newer_L_X){
+      older_L_X = newer_L_X;
+      uint8_t L_X = (uint8_t)(newer_L_X - 'A');
+      uint8_t index = map(L_X, 0, 14, 0, sizeof(exposureCompensation)/sizeof(exposureCompensation[0])); //要素数が15以下ならmapで変換
+      snprintf(buffer, sizeof(buffer), POST_REQUEST_BODY_setOptions_exposureCompensation, exposureCompensation[index]);
+      CommandRequest(client, buffer);
+      CommandRequest(client, POST_REQUEST_BODY_takePicture);
+    }
   }
-
-  GettingStarted(client);
-
-  Serial.println();
-  Serial.println("closing connection");
+}
+#if 0
+int readint(int i2cAddress)
+{
+    uint16_t val = 0;
+    byte buf[2]; 
+    if (readdata(i2cAddress, buf, 2) == 2){
+        val = ((buf[0] << 8) | buf[1]) / 1.2;   // Calculate
+        return (int)val;
+    }
+    return 0;
+}
+#endif
+byte readbyte(int i2cAddress)
+{
+    uint16_t val = 0;
+    byte buf[2]; 
+    if (readdata(i2cAddress, buf, 1) == 1){
+        return(buf[0]);
+    }
+    return 0;
 }
 
+int readdata(int i2cAddress, byte *buff, int count)
+{
+    int i = 0;
+    *buff = 0x00;
+    Wire.beginTransmission(i2cAddress); 
+    Wire.requestFrom(i2cAddress, count);  
+    while (Wire.available())  
+    { 
+        *(buff + i) = Wire.read();
+        i++;
+    }
+    Wire.endTransmission();  
+    return i; 
+}
