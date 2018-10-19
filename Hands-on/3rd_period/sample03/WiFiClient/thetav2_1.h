@@ -1,6 +1,23 @@
 #ifndef _thetav2_1_h
 #define _thetav2_1_h
 
+#ifdef ARDUINO_ESP32_DEV
+#include <WiFi.h>
+#else
+#include <ESP8266WiFi.h>
+#endif
+#include <aJSON.h>
+
+#ifdef THETA_V
+#define AP_SSID "THETAYL" AP_PASSWORD ".OSC"
+#elif defined THETA_S
+#define AP_SSID "THETAXS" AP_PASSWORD ".OSC"
+#elif defined THETA_SC
+#define AP_SSID "THETAYJ" AP_PASSWORD ".OSC"
+#elif defined THETA_SC_TYPE_HATSUNE_MIKU
+#define AP_SSID "THETAHM" AP_PASSWORD ".OSC"
+#endif
+
 #ifndef AUTH_UUID
 #define AUTH_UUID "00000000-0000-0000-0000-000000000000"
 #endif
@@ -29,6 +46,13 @@
 #define WEB_PORT "80"
 #endif
 #define SETTION_ID "SID_0001"
+
+String password = AP_PASSWORD;
+String ssid     = AP_SSID;
+String host = WEB_SERVER;
+String port = WEB_PORT;
+int result_timeout = 10000; //10秒
+WiFiClient client;
 
 static const char* const POST_REQUEST_BODY_takePicture = "{\r\n"
 "	\"name\":\"camera.takePicture\"\r\n"
@@ -172,6 +196,230 @@ void margeString_POST_Request(char *dststr, size_t dstlen, const char* const bod
 	size_t length = strlen(body);
 	snprintf(dststr, dstlen, "POST %s%s%d%s%s", path, REQUEST_HEADER_1, length, REQUEST_HEADER_2, body);
 	return;
+}
+
+// WiFiClient client;はグローバルで定義して参照させること。引数にすると接続が維持されないようだ。
+int THETA_connect()
+{
+  return(client.connect(host.c_str(), port.toInt()));
+}
+
+// WiFiClient client;はグローバルで定義して参照させること。引数にすると接続が維持されないようだ。
+void THETA_initialized()
+{
+  String jsonString = "";
+  String privious_fileUrl = "";
+  char buffer[1024] = {'\0'};
+  char buff[1024] = {'\0'};
+
+  {
+    Serial.println("----------state----------");
+    margeString_POST_Request(buffer, 1024, "", "/osc/state");
+    Serial.println(buffer);
+    client.print(String(buffer));
+    unsigned long timeout = millis();
+    while (client.available() == 0) {
+      if (millis() - timeout > result_timeout) {
+        Serial.println(">>> Client Timeout !");
+        client.stop();
+        return;
+      }
+    }
+    while (client.available()) {
+      String line = client.readStringUntil('\r');
+      line.trim();
+      jsonString += line;
+      Serial.println(line);
+    }
+    int index = jsonString.indexOf("{");
+    jsonString = jsonString.substring(index);
+    jsonString += "}";
+    // aJson.parseの引数がchar*なので、jsonString.c_str()が使えない
+    int len = jsonString.length();
+    memset(buff, '\0', 1024);
+    jsonString.toCharArray(buff, len);
+    Serial.println(buff);
+    aJsonObject* root = aJson.parse(buff);
+    //    aJsonObject* root = aJson.parse(jsonString.c_str());
+    if (NULL == root) {
+      Serial.println("aJson.parse() failed root");
+      return;
+    }
+    aJsonObject* state = aJson.getObjectItem(root, "state");
+    if (NULL == state) {
+      Serial.println("aJson.parse() failed state");
+      return;
+    }
+    aJsonObject* _apiVersion = aJson.getObjectItem(state, "_apiVersion");
+    if (NULL == _apiVersion) {
+      Serial.println("aJson.parse() failed _apiVersion");
+      return;
+    }
+    const int _apiVersion1 = _apiVersion->valueint;
+    Serial.print("_apiVersion : ");
+    Serial.println(_apiVersion1);
+    if (_apiVersion1 < 2) {
+      // _apiVersion=1の場合
+      aJsonObject* _latestFileUrl = aJson.getObjectItem(state, "_latestFileUri");
+      if (NULL == _latestFileUrl) {
+        Serial.println("aJson.parse() failed _latestFileUrl");
+        return;
+      }
+      const char* fileUrl1 = _latestFileUrl->valuestring;
+      privious_fileUrl = fileUrl1;
+      Serial.print("fileUri : ");
+      Serial.println(privious_fileUrl);
+      Serial.println("----------startSession----------");
+      margeString_POST_Request(buffer, 1024, POST_REQUEST_BODY_startSession);
+      Serial.println(buffer);
+      client.print(String(buffer));
+      unsigned long timeout = millis();
+      while (client.available() == 0) {
+        if (millis() - timeout > result_timeout) {
+          Serial.println(">>> Client Timeout !");
+          client.stop();
+          return;
+        }
+      }
+      // Read all the lines of the reply from server and print them to Serial
+      jsonString = "";
+      while (client.available()) {
+        String line = client.readStringUntil('\r');
+        line.trim();
+        jsonString += line;
+        Serial.println(line);
+      }
+      int index = jsonString.indexOf("{");
+      jsonString = jsonString.substring(index);
+      jsonString += "}";
+      // aJson.parseの引数がchar*なので、jsonString.c_str()が使えない
+      int len = jsonString.length();
+      memset(buff, '\0', 1024);
+      jsonString.toCharArray(buff, len);
+      Serial.println(buff);
+      aJsonObject* root = aJson.parse(buff);
+      //    aJsonObject* root = aJson.parse(jsonString.c_str());
+      if (NULL == root) {
+        Serial.println("aJson.parse() failed root");
+        return;
+      }
+      aJsonObject* results = aJson.getObjectItem(root, "results");
+      if (NULL == results) {
+        Serial.println("aJson.parse() failed results");
+        return;
+      }
+      aJsonObject* sessionId = aJson.getObjectItem(results, "sessionId");
+      if (NULL == sessionId) {
+        Serial.println("aJson.parse() failed sessionId");
+        return;
+      }
+      const char* sessionId1 = sessionId->valuestring;
+      Serial.print("sessionId : ");
+      Serial.println(sessionId1);
+      Serial.println("----------clientVersion----------");
+      margeString_POST_Request(buffer, 1024, POST_REQUEST_BODY_clientVersion);
+      String str_rep = buffer;
+      str_rep.replace(SETTION_ID, sessionId1);
+      Serial.println(str_rep);
+      client.print(str_rep);
+      timeout = millis();
+      while (client.available() == 0) {
+        if (millis() - timeout > result_timeout) {
+          Serial.println(">>> Client Timeout !");
+          client.stop();
+          return;
+        }
+      }
+      // Read all the lines of the reply from server and print them to Serial
+      jsonString = "";
+      while (client.available()) {
+        String line = client.readStringUntil('\r');
+        line.trim();
+        jsonString += line;
+        Serial.println(line);
+      }
+    } else {
+      // _apiVersion=2の場合
+      aJsonObject* _latestFileUrl = aJson.getObjectItem(state, "_latestFileUrl");
+      if (NULL == _latestFileUrl) {
+        Serial.println("aJson.parse() failed _latestFileUrl");
+        return;
+      }
+      const char* fileUrl1 = _latestFileUrl->valuestring;
+      privious_fileUrl = fileUrl1;
+      Serial.print("fileUrl : ");
+      Serial.println(privious_fileUrl);
+    }
+  }
+  return;
+}
+
+// WiFiClient client;はグローバルで定義して参照させること。引数にすると接続が維持されないようだ。
+void THETA_init()
+{
+  // We start by connecting to a WiFi network
+  Serial.println();
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+  WiFi.begin(ssid.c_str(), password.c_str());
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+  Serial.print("connecting to ");
+  Serial.println(host);
+
+  delay(5000);
+  Serial.print("connecting to ");
+  Serial.println(host);
+  // Use WiFiClient class to create TCP connections
+  if (!THETA_connect()) {
+    Serial.println("connection failed");
+    return;
+  }
+  THETA_initialized();
+}
+
+// WiFiClient client;はグローバルで定義して参照させること。引数にすると接続が維持されないようだ。
+void CommandRequest(const char* const request)
+{
+  char buffer[1024] = {'\0'};
+
+  Serial.println("----------command----------");
+  margeString_POST_Request(buffer, sizeof(buffer), request);
+  Serial.println(buffer);
+  // This will send the request to the server
+  client.println(String(buffer));
+  unsigned long timeout = millis();
+  while (client.available() == 0) {
+    if (millis() - timeout > result_timeout) {
+      Serial.println(">>> Client Timeout !");
+      client.stop();
+      return;
+    }
+  }
+  // Read all the lines of the reply from server and print them to Serial
+  while (client.available()) {
+    String line = client.readStringUntil('\r');
+    line.trim();
+    Serial.println(line);
+  }
+  {
+    Serial.println("----------再接続----------");
+    client.stop();
+    // delay(1000);
+    if (!THETA_connect()) {
+      Serial.println("connection failed");
+      return;
+    }
+  }
+  return;
 }
 
 //ESP-IDFサンプル
