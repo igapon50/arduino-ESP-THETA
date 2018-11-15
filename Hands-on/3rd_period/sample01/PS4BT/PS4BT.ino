@@ -16,6 +16,7 @@
 #ifdef Enable_I2C
 #include <Wire.h>
 // A4(SDA)とA5(SCL)は、I2C通信に使用する
+static const int i2cAddress = 8;
 #endif// Enable_I2C
 
 USB Usb;
@@ -38,7 +39,13 @@ void setup() {
 
 #ifdef Enable_I2C
 // I2Cの準備
+#ifdef ARDUINO_ESP32_DEV
+  int SDA32 = 21;
+  int SCL32 = 22;
+  Wire.begin(SDA32, SCL32);
+#else
   Wire.begin(); // join i2c bus (address optional for master)
+#endif// ARDUINO_ESP32_DEV
 #endif// Enable_I2C
 }
 
@@ -66,12 +73,12 @@ void loop() {
       older_R_X = newer_R_X;
       older_R_Y = newer_R_Y;
 #ifdef Enable_I2C
-      Wire.beginTransmission(8); //transmit to device #8
+      Wire.beginTransmission(i2cAddress);
       Wire.write(newer_L_X);
       Wire.write(newer_L_Y);
       Wire.write(newer_R_X);
       Wire.write(newer_R_Y);
-      Wire.endTransmission(); //stop transmitting
+      Wire.endTransmission();
 #endif// Enable_I2C
       Serial.print(newer_L_X);
       Serial.print(newer_L_Y);
